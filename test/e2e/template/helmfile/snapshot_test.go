@@ -73,9 +73,16 @@ func testHelmfileTemplateWithBuildCommand(t *testing.T, GoYamlV3 bool) {
 	localChartPortSets := make(map[int]struct{})
 
 	logger := helmexec.NewLogger(os.Stderr, "info")
-	runner := &helmexec.ShellRunner{
+	runner := (helmexec.Runner)(nil)
+	runner = &helmexec.ShellRunner{
 		Logger: logger,
 		Ctx:    context.TODO(),
+	}
+	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+		runner = &helmexec.NativeRunner{
+			Logger: logger,
+			Ctx:    context.TODO(),
+		}
 	}
 
 	c := fakeInit{}

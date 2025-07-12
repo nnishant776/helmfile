@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"os"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -32,12 +34,19 @@ func TestShellRunner_Execute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buffer bytes.Buffer
-			shell := ShellRunner{
+			shell := (Runner)(nil)
+			shell = ShellRunner{
 				Logger: NewLogger(&buffer, "debug"),
 				Ctx:    context.TODO(),
 			}
-			got, err := shell.Execute("echo", strings.Split("template", " "), map[string]string{}, tt.enableLiveOutput)
+			if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+				shell = &NativeRunner{
+					Logger: NewLogger(&buffer, "debug"),
+					Ctx:    context.TODO(),
+				}
+			}
 
+			got, err := shell.Execute("echo", strings.Split("template", " "), map[string]string{}, tt.enableLiveOutput)
 			if err != nil {
 				t.Errorf("Execute() has produced an error = %v", err)
 				return
