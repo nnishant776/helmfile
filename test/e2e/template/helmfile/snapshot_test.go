@@ -20,6 +20,7 @@ import (
 	"github.com/helmfile/helmfile/pkg/app"
 	"github.com/helmfile/helmfile/pkg/envvar"
 	"github.com/helmfile/helmfile/pkg/helmexec"
+	"github.com/helmfile/helmfile/pkg/runtime"
 	"github.com/helmfile/helmfile/pkg/yaml"
 )
 
@@ -78,7 +79,7 @@ func testHelmfileTemplateWithBuildCommand(t *testing.T, GoYamlV3 bool) {
 		Logger: logger,
 		Ctx:    context.TODO(),
 	}
-	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+	if runtime.NativeHelm {
 		runner = &helmexec.NativeRunner{
 			Logger: logger,
 			Ctx:    context.TODO(),
