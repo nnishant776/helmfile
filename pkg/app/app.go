@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -110,10 +111,18 @@ func Init(app *App) *App {
 }
 
 func (a *App) Init(c InitConfigProvider) error {
-	runner := &helmexec.ShellRunner{
+	runner := (helmexec.Runner)(nil)
+	runner = &helmexec.ShellRunner{
 		Logger:                     a.Logger,
 		Ctx:                        a.ctx,
 		StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
+	}
+	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+		runner = &helmexec.NativeRunner{
+			Logger:                     a.Logger,
+			Ctx:                        a.ctx,
+			StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
+		}
 	}
 	helmfileInit := NewHelmfileInit(a.OverrideHelmBinary, c, a.Logger, runner)
 	return helmfileInit.Initialize()
@@ -799,12 +808,52 @@ func (a *App) getHelm(st *state.HelmState) helmexec.Interface {
 
 	key := createHelmKey(bin, kubectx)
 
-	if _, ok := a.helms[key]; !ok {
-		a.helms[key] = helmexec.New(bin, helmexec.HelmExecOptions{EnableLiveOutput: a.EnableLiveOutput, DisableForceUpdate: a.DisableForceUpdate}, a.Logger, kubeconfig, kubectx, &helmexec.ShellRunner{
+	runner := (helmexec.Runner)(nil)
+	runner = &helmexec.ShellRunner{
+		Logger:                     a.Logger,
+		Ctx:                        a.ctx,
+		StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
+	}
+
+	isNativeHelm := false
+
+	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+		isNativeHelm = true
+	}
+
+	if isNativeHelm {
+		runner = &helmexec.NativeRunner{
 			Logger:                     a.Logger,
 			Ctx:                        a.ctx,
 			StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
-		})
+		}
+	}
+
+	if _, ok := a.helms[key]; !ok {
+		a.helms[key] = helmexec.New(
+			bin,
+			helmexec.HelmExecOptions{
+				EnableLiveOutput:   a.EnableLiveOutput,
+				DisableForceUpdate: a.DisableForceUpdate,
+			},
+			a.Logger,
+			kubeconfig,
+			kubectx,
+			runner,
+		)
+		if isNativeHelm {
+			a.helms[key] = helmexec.NewNativeExec(
+				bin,
+				helmexec.HelmExecOptions{
+					EnableLiveOutput:   a.EnableLiveOutput,
+					DisableForceUpdate: a.DisableForceUpdate,
+				},
+				a.Logger,
+				kubeconfig,
+				kubectx,
+				runner,
+			)
+		}
 	}
 
 	return a.helms[key]
