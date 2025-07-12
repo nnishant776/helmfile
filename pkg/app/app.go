@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"text/tabwriter"
@@ -21,6 +20,7 @@ import (
 	"github.com/helmfile/helmfile/pkg/helmexec"
 	"github.com/helmfile/helmfile/pkg/plugins"
 	"github.com/helmfile/helmfile/pkg/remote"
+	"github.com/helmfile/helmfile/pkg/runtime"
 	"github.com/helmfile/helmfile/pkg/state"
 )
 
@@ -117,7 +117,7 @@ func (a *App) Init(c InitConfigProvider) error {
 		Ctx:                        a.ctx,
 		StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
 	}
-	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+	if runtime.NativeHelm {
 		runner = &helmexec.NativeRunner{
 			Logger:                     a.Logger,
 			Ctx:                        a.ctx,
@@ -815,13 +815,7 @@ func (a *App) getHelm(st *state.HelmState) helmexec.Interface {
 		StripArgsValuesOnExitError: a.StripArgsValuesOnExitError,
 	}
 
-	isNativeHelm := false
-
-	if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
-		isNativeHelm = true
-	}
-
-	if isNativeHelm {
+	if runtime.NativeHelm {
 		runner = &helmexec.NativeRunner{
 			Logger:                     a.Logger,
 			Ctx:                        a.ctx,
@@ -841,7 +835,7 @@ func (a *App) getHelm(st *state.HelmState) helmexec.Interface {
 			kubectx,
 			runner,
 		)
-		if isNativeHelm {
+		if runtime.NativeHelm {
 			a.helms[key] = helmexec.NewNativeExec(
 				bin,
 				helmexec.HelmExecOptions{

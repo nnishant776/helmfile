@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
-	"os"
 	"os/exec"
 	"reflect"
-	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/helmfile/helmfile/pkg/runtime"
 )
 
 func TestShellRunner_Execute(t *testing.T) {
@@ -39,7 +39,7 @@ func TestShellRunner_Execute(t *testing.T) {
 				Logger: NewLogger(&buffer, "debug"),
 				Ctx:    context.TODO(),
 			}
-			if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+			if runtime.NativeHelm {
 				shell = &NativeRunner{
 					Logger: NewLogger(&buffer, "debug"),
 					Ctx:    context.TODO(),

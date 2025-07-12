@@ -3,8 +3,6 @@ package event
 import (
 	goContext "context"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -12,6 +10,7 @@ import (
 	"github.com/helmfile/helmfile/pkg/environment"
 	"github.com/helmfile/helmfile/pkg/filesystem"
 	"github.com/helmfile/helmfile/pkg/helmexec"
+	"github.com/helmfile/helmfile/pkg/runtime"
 	"github.com/helmfile/helmfile/pkg/tmpl"
 )
 
@@ -53,7 +52,7 @@ func (bus *Bus) Trigger(evt string, evtErr error, context map[string]any) (bool,
 			// It seems that this code only for running hooks, which took not to long time as helm.
 			Ctx: goContext.TODO(),
 		}
-		if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+		if runtime.NativeHelm {
 			bus.Runner = &helmexec.NativeRunner{
 				Dir:    bus.BasePath,
 				Logger: bus.Logger,
