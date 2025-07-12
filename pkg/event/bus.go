@@ -3,6 +3,8 @@ package event
 import (
 	goContext "context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 
 	"go.uber.org/zap"
@@ -50,6 +52,15 @@ func (bus *Bus) Trigger(evt string, evtErr error, context map[string]any) (bool,
 			// It would be better to pass app.Ctx here, but it requires a lot of work.
 			// It seems that this code only for running hooks, which took not to long time as helm.
 			Ctx: goContext.TODO(),
+		}
+		if v, err := strconv.ParseBool(os.Getenv("NATIVE_HELM")); err == nil && v {
+			bus.Runner = &helmexec.NativeRunner{
+				Dir:    bus.BasePath,
+				Logger: bus.Logger,
+				// It would be better to pass app.Ctx here, but it requires a lot of work.
+				// It seems that this code only for running hooks, which took not to long time as helm.
+				Ctx: goContext.TODO(),
+			}
 		}
 	}
 
