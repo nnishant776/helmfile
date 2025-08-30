@@ -25,7 +25,7 @@ type NativeRunner struct {
 // Execute helm as a native command
 func (self *NativeRunner) Execute(cmd string, args []string, env map[string]string, enableLiveOutput bool) ([]byte, error) {
 	logWriterGenerators := []*logWriterGenerator{
-		&logWriterGenerator{
+		{
 			log: self.Logger,
 		},
 	}
