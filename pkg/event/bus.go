@@ -10,6 +10,7 @@ import (
 	"github.com/helmfile/helmfile/pkg/environment"
 	"github.com/helmfile/helmfile/pkg/filesystem"
 	"github.com/helmfile/helmfile/pkg/helmexec"
+	"github.com/helmfile/helmfile/pkg/runtime"
 	"github.com/helmfile/helmfile/pkg/tmpl"
 )
 
@@ -50,6 +51,15 @@ func (bus *Bus) Trigger(evt string, evtErr error, context map[string]any) (bool,
 			// It would be better to pass app.Ctx here, but it requires a lot of work.
 			// It seems that this code only for running hooks, which took not to long time as helm.
 			Ctx: goContext.TODO(),
+		}
+		if runtime.NativeHelm {
+			bus.Runner = &helmexec.NativeRunner{
+				Dir:    bus.BasePath,
+				Logger: bus.Logger,
+				// It would be better to pass app.Ctx here, but it requires a lot of work.
+				// It seems that this code only for running hooks, which took not to long time as helm.
+				Ctx: goContext.TODO(),
+			}
 		}
 	}
 

@@ -20,6 +20,7 @@ import (
 	"github.com/helmfile/helmfile/pkg/app"
 	"github.com/helmfile/helmfile/pkg/envvar"
 	"github.com/helmfile/helmfile/pkg/helmexec"
+	"github.com/helmfile/helmfile/pkg/runtime"
 	"github.com/helmfile/helmfile/pkg/yaml"
 )
 
@@ -73,9 +74,16 @@ func testHelmfileTemplateWithBuildCommand(t *testing.T, GoYamlV3 bool) {
 	localChartPortSets := make(map[int]struct{})
 
 	logger := helmexec.NewLogger(os.Stderr, "info")
-	runner := &helmexec.ShellRunner{
+	runner := (helmexec.Runner)(nil)
+	runner = &helmexec.ShellRunner{
 		Logger: logger,
 		Ctx:    context.TODO(),
+	}
+	if runtime.NativeHelm {
+		runner = &helmexec.NativeRunner{
+			Logger: logger,
+			Ctx:    context.TODO(),
+		}
 	}
 
 	c := fakeInit{}
